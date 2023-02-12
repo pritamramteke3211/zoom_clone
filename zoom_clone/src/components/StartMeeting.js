@@ -32,7 +32,10 @@ const StartMeeting = ({name, setname, roomId, setroomId, joinRoom}) => {
         <View style={{alignItems: 'center'}}>
           <TouchableOpacity
             onPress={() => joinRoom()}
-            style={styles.startMeetingButton}>
+            style={[styles.startMeetingButton,  { backgroundColor: name && roomId ? '#0470DC': '#468fd8'}]}
+
+            disabled={!(name && roomId)}
+            >
             <Text style={{color: 'white', fontWeight: 'bold'}}>
               Start Meeting
             </Text>
@@ -66,7 +69,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0470DC',
     height: 50,
     borderRadius: 15,
   },

@@ -6,12 +6,14 @@ import {
   TextInput,
   Alert,
   SafeAreaView,
+  Modal,
 } from 'react-native';
 import React, {useState, useEffect, Children, useLayoutEffect} from 'react';
 import StartMeeting from '../components/StartMeeting';
 import {io} from 'socket.io-client';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
-import FAIcon from 'react-native-vector-icons/FontAwesome'
+import FAIcon from 'react-native-vector-icons/FontAwesome';
+import Chat from '../components/Chat';
 
 let socket;
 
@@ -45,6 +47,7 @@ const MeetingRoom = () => {
 
   const [activeUsers, setactiveUsers] = useState([]);
   const [startCamera, setstartCamera] = useState(false);
+  const [modalVisible, setmodalVisible] = useState(false)
 
   const devices = useCameraDevices();
   const device = devices.back
@@ -69,7 +72,6 @@ const MeetingRoom = () => {
     startCameraFunc();
     console.log("name1",name)
     socket.emit('join-room', {roomId: roomId, userName: name}); 
-    // socket.emit('room', {roomId: 'ree'}); 
 
   };
 
@@ -78,9 +80,9 @@ const MeetingRoom = () => {
     const API_URL = 'http://192.168.1.65:3001';
     socket = io(`${API_URL}`);
     socket.on('connection', () => console.log('connected'));
-    socket.on('all-users', users_data => {
-      console.log('Active Users', users_data);
-      users = users_data.users.filter(user => (user.userName != users_data.log_user))
+    socket.on('all-users', users => {
+      console.log('Active Users', users);
+      console.log("name2",  name)  // states reach to predefined state insode socket // May be effect ran before the updated
       console.log("users",users)
       setactiveUsers(users);
     });
@@ -92,6 +94,25 @@ const MeetingRoom = () => {
     <View style={styles.container}>
       {startCamera ? (
         <SafeAreaView style={{flex: 1}}>
+          <Modal 
+          animationType='slide'
+          transparent={false}
+          presentationStyle={'fullScreen'}
+          visible={modalVisible}
+          onRequestClose={()=>{
+            Alert.alert("Modal has been closed.");
+            setmodalVisible(!modalVisible)
+          }}
+          >
+            <Chat
+            modalVisible={modalVisible}
+            setmodalVisible={setmodalVisible}
+            />
+          </Modal>
+
+
+
+          {/* Active Users */}
           <View style={styles.activeUsersContainer}>
           {/* We gave cameraContainer styles flex:1 to take much space as possible */}
          <View 
@@ -103,8 +124,8 @@ const MeetingRoom = () => {
            
             <Camera
               style={{
-                width: activeUsers.length == 0 ? '100%': 185, 
-                height: activeUsers.length == 0 ? 400 : 185
+                width: activeUsers.length <= 1 ? '100%': 185, 
+                height: activeUsers.length <= 1 ? 400 : 185
               }}
               device={device}
               isActive={true}
@@ -112,7 +133,7 @@ const MeetingRoom = () => {
          
           )}
           {
-            activeUsers.length > 0 && activeUsers.map((user, index)=>{
+            activeUsers.length > 0 && activeUsers.filter(user => user.userName != name).map((user, index)=>{
               return(
               <View key={index} style={styles.activeUserContainer}>
                   <Text style={{color:'white'}}>{user.userName}</Text>
@@ -129,10 +150,18 @@ const MeetingRoom = () => {
                 <TouchableOpacity style={styles.tile} key={idx}>
                 <FAIcon name={itm.name} size={24} color={'#efefef'} />
                 <Text style={styles.textTile} >{itm.title}</Text>
-              </TouchableOpacity>)
-              }) 
-                
-              }
+              </TouchableOpacity>
+              )})}
+
+              <TouchableOpacity style={styles.tile}
+              onPress={()=> {
+                setmodalVisible(true)
+              }}
+              >
+                <FAIcon name={'comment'} size={24} color={'#efefef'} />
+                <Text style={styles.textTile} >Chat</Text>
+              </TouchableOpacity>
+
           </View>
         </SafeAreaView>
       ) : (
